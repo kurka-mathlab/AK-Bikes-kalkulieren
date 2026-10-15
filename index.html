@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2377a8">
+  <meta name="description" content="Hilf den Auszubildenden Max und Julia aus dem Team Buchhaltung: Ordne die Begriffe im Rechenschema von AK Bikes.">
+  <title>Kalkulieren · AK Bikes</title>
+  <!--
+    AK BIKES – KALKULIEREN
+    Diese Datei als index.html speichern und ins GitHub-Repository hochladen.
+    Alle Gestaltungselemente und Funktionen sind in dieser Datei enthalten.
+    Optionales Audio: audio.mp3 in denselben Ordner hochladen und unten im
+    JavaScript bei AUDIO_URL den Wert "audio.mp3" eintragen.
+    Ohne Audio-Datei kann die Lehrkraft das Audio gemeinsam abspielen.
+    Farben und Logo nach https://www.ak-bikes.bayern/ (Unternehmen: #2377A8,
+    Schülerbereich: #FF963F, Grau: #494949). Quelle: /files/src/css/ak-bikes/global.css.
+    Die Prüffunktion wird 90 Sekunden nach Seitenaufruf oder Neustart freigegeben.
+  -->
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #30353a;
+      --muted: #5e6871;
+      --paper: #f3f5f7;
+      --line: #dce2e8;
+      --blue: #2377a8;
+      --orange: #ff963f;
+      --blue-soft: #e8f3fb;
+      --red: #a62b35;
+      --radius: 22px;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: "Aptos", "Segoe UI", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+    button, audio { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+    button:focus-visible, a:focus-visible, audio:focus-visible { outline: 3px solid #4778da; outline-offset: 4px; }
+    button { color: inherit; }
+    svg { display: block; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    .skip-link { position: fixed; left: 16px; top: -80px; z-index: 50; background: white; padding: 12px; border-radius: 8px; color: var(--ink); }
+    .skip-link:focus { top: 12px; }
+    .topbar { background: var(--blue); color: white; }
+    .topbar-inner { max-width: 1168px; margin: auto; height: 76px; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 11px; }
+    .brand-mark { width: 45px; height: 42px; background: white; border-radius: 9px; display: grid; place-items: center; }
+    .brand-mark img { display: block; width: 37px; height: 31px; object-fit: contain; }
+    .brand-word { font-size: 25px; line-height: 1; font-weight: 900; font-style: italic; letter-spacing: -1.3px; }
+    .brand-word span { color: white; }
+    .brand-sub { margin-top: 6px; font-size: 9px; font-weight: 650; letter-spacing: 2.5px; color: #e1eff7; }
+    .top-tag { display: flex; gap: 9px; align-items: center; font-size: 11px; font-weight: 700; letter-spacing: 1.8px; }
+    .top-tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); }
+    main { max-width: 1168px; margin: auto; padding: 30px 28px 18px; }
+    .hero { display: grid; grid-template-columns: minmax(0, 1fr) 240px; align-items: center; gap: 36px; margin-bottom: 25px; }
+    .eyebrow { margin: 0 0 9px; color: var(--blue); font-size: 11px; font-weight: 800; letter-spacing: 1.8px; text-transform: uppercase; }
+    h1 { font-size: clamp(40px, 5.4vw, 65px); letter-spacing: -2.8px; line-height: 1.04; margin: 0 0 13px; font-weight: 850; }
+    .instruction { font-size: 16px; line-height: 1.6; margin: 0; max-width: 740px; }
+    .hero-art { position: relative; height: 182px; background: #e2eef6; border-radius: 26px 6px 26px 6px; overflow: hidden; }
+    .hero-art::before { content: ""; position: absolute; width: 200px; height: 200px; border: 1px solid #c3d7e6; border-radius: 50%; right: -64px; top: -80px; }
+    .hero-art > svg { width: 225px; height: 122px; position: absolute; right: 8px; top: 0; }
+    .team { display: flex; align-items: center; gap: 10px; position: absolute; left: 18px; bottom: 14px; }
+    .avatars { display: flex; padding-left: 0; }
+    .avatar { width: 31px; height: 31px; display: grid; place-items: center; border: 2px solid #e2eef6; border-radius: 50%; background: var(--blue); color: white; font-size: 12px; font-weight: 800; }
+    .avatar + .avatar { margin-left: -8px; background: #494949; }
+    .team-title { font-size: 13px; font-weight: 750; }
+    .team-sub { display: block; margin-top: 2px; font-size: 11px; line-height: 1.35; color: #526878; }
+    .audio-card { background: white; border: 1px solid var(--line); border-radius: 16px; padding: 14px 20px; margin-bottom: 20px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px 24px; }
+    .audio-label { font-weight: 750; display: flex; align-items: center; gap: 10px; }
+    .audio-label svg { width: 22px; height: 22px; }
+    audio { height: 40px; flex: 1; min-width: 230px; }
+    .audio-error { flex-basis: 100%; margin: 0; color: var(--red); font-size: 14px; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1.48fr) minmax(290px, 1fr); gap: 22px; align-items: start; }
+    .panel { border: 1px solid var(--line); border-radius: var(--radius); background: white; overflow: hidden; box-shadow: 0 5px 20px #233b5310; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 20px 24px 17px; }
+    h2 { font-size: 19px; letter-spacing: -.35px; margin: 0; font-weight: 780; }
+    .step { display: inline-grid; place-items: center; width: 25px; height: 25px; border: 1px solid var(--line); border-radius: 50%; font-size: 11px; color: var(--muted); margin-right: 9px; vertical-align: 2px; font-weight: 650; }
+    .count { white-space: nowrap; color: var(--muted); font-size: 12px; }
+    .count strong { font-size: 15px; color: var(--ink); }
+    .progress-track { height: 3px; background: #edf1f5; margin: 0 24px; border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--orange); width: 0; transition: width .25s ease; }
+    .schema { padding: 16px 24px 19px; }
+    .schema-caption { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; margin: 0 0 10px 50px; }
+    .rows { border-top: 4px solid var(--ink); }
+    .calc-row { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; min-height: 67px; align-items: center; border-top: 1px solid #d8dfe6; padding: 7px 0; }
+    .calc-row:first-child { border-top: none; }
+    .calc-row.subtotal { border-top: 4px solid var(--ink); }
+    .calc-row:last-child { padding-bottom: 0; }
+    .operator { font-size: 30px; font-weight: 650; text-align: center; line-height: 1; user-select: none; }
+    .slot { min-height: 48px; border-radius: 9px; display: flex; align-items: stretch; gap: 5px; transition: background .15s, outline-color .15s; }
+    .empty-slot { width: 100%; min-height: 48px; background: #f7f9fb; border: 1.5px dashed #bbcbd7; border-radius: 9px; color: #617382; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 15px; text-align: left; }
+    .workspace.choosing .empty-slot { border-color: var(--blue); background: #edf5fc; }
+    .slot.drop-hover { outline: 3px solid var(--blue); outline-offset: 2px; background: #dceffc; }
+    .slot.drop-hover .empty-slot { background: #dceffc; border-color: transparent; }
+    .bank-head { padding-bottom: 7px; }
+    .bank-copy { color: var(--muted); line-height: 1.55; font-size: 13px; margin: 0; padding: 0 24px 17px; }
+    .bank-zone { margin: 0 14px 14px; padding: 0 10px 10px; min-height: 180px; border-radius: 14px; }
+    .bank-zone.drop-hover { background: #e8f3fb; outline: 3px dashed var(--blue); outline-offset: -2px; }
+    .term-list { display: grid; gap: 9px; }
+    .term { width: 100%; display: flex; align-items: center; gap: 11px; min-height: 48px; border: 1px solid #cddde9; background: #eff5fa; border-radius: 9px; padding: 11px 13px; text-align: left; cursor: grab; font-size: 15px; font-weight: 650; line-height: 1.25; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; transition: background .15s, border-color .15s, box-shadow .15s; }
+    .term:hover { background: #e4eff8; border-color: #8db3cd; }
+    .term.is-selected { background: #dceffc; border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue); }
+    .grip { flex-shrink: 0; width: 8px; height: 15px; background: radial-gradient(circle, #7291a7 1.2px, transparent 1.6px) 0 0 / 4px 5px; opacity: .85; }
+    .term-label { flex: 1; min-width: 0; overflow-wrap: anywhere; hyphens: auto; }
+    .abbr { font-size: .82em; color: #526b7c; font-weight: 550; white-space: nowrap; }
+    .slot .term { min-width: 0; flex: 1; font-size: 16px; }
+    .slot .term-label { display: block; }
+    .remove-term { background: none; border: 0; border-radius: 8px; padding: 0; flex: 0 0 30px; min-width: 30px; color: var(--muted); font-size: 22px; cursor: pointer; }
+    .remove-term:hover { background: #e8eef3; color: var(--ink); }
+    .verdict { align-self: center; font-size: 16px; line-height: 1; flex: 0 0 18px; text-align: center; font-weight: 850; }
+    .slot.is-correct .term { background: #e9f4df; border-color: #72a34c; }
+    .slot.is-correct .verdict { color: #3c7331; }
+    .slot.is-wrong .term { background: #fff0ef; border-color: #cd6670; }
+    .slot.is-wrong .verdict { color: var(--red); }
+    .slot.is-missing .empty-slot { border-color: #bd8230; background: #fff9ed; }
+    .bank-empty { text-align: center; padding: 26px 9px; border: 1px dashed #c1d3df; border-radius: 12px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .bank-empty strong { display: block; margin-bottom: 5px; color: var(--ink); }
+    .bank-return { margin-top: 12px; width: 100%; border: 1px dashed #91aec2; border-radius: 9px; padding: 10px; background: #f8fbfd; font-size: 13px; min-height: 44px; cursor: pointer; }
+    .bank-tip { border-top: 1px solid var(--line); background: #f9fbfd; padding: 15px 24px; display: flex; gap: 9px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .bank-tip svg { width: 17px; height: 17px; flex: 0 0 17px; margin-top: 1px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; padding: 0 24px 18px; }
+    .button { min-height: 46px; padding: 11px 17px; border: 1px solid var(--line); border-radius: 10px; font-weight: 750; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 9px; background: white; }
+    .button svg { width: 17px; height: 17px; }
+    .button-primary { background: var(--blue); color: white; border-color: var(--blue); flex: 1; }
+    .button-primary:hover { background: #1d648d; }
+    .button-secondary:hover { background: #edf2f7; }
+    .check-wait { min-height: 46px; flex: 1; border: 1px solid #d8dadd; border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; justify-content: center; background: #eff0f2; color: #969ba1; cursor: not-allowed; }
+    .check-wait svg { width: 17px; height: 17px; flex: 0 0 17px; }
+    .feedback { margin: 0 24px 22px; padding: 12px 14px; border-radius: 10px; background: #eef3f7; color: #4d6475; font-size: 13px; line-height: 1.5; min-height: 44px; }
+    .feedback[data-kind="success"] { background: #e5f3ce; color: #2c5c28; border-left: 4px solid #609238; }
+    .feedback[data-kind="warning"] { background: #fff3e4; color: #805015; border-left: 4px solid #be8a42; }
+    .feedback[data-kind="retry"] { background: #fff0ef; color: #97313a; border-left: 4px solid #bd5761; }
+    footer { display: flex; justify-content: space-between; gap: 14px; padding: 20px 3px 5px; color: #687986; font-size: 11px; }
+    .drag-ghost { position: fixed; top: 0; left: 0; z-index: 100; pointer-events: none; opacity: .97; box-shadow: 0 12px 34px #15345330; background: #dceffc !important; border-color: var(--blue) !important; transition: none; }
+    .term.is-dragging { opacity: .3; }
+    body.is-dragging { cursor: grabbing; }
+    @media (min-width: 1000px) { .terms-panel { position: sticky; top: 18px; } }
+    @media (max-width: 850px) {
+      .hero { grid-template-columns: minmax(0, 1fr) 175px; gap: 20px; }
+      .hero-art { height: 182px; }
+      .hero-art > svg { width: 187px; right: -9px; }
+      .team { left: 11px; gap: 6px; }
+      .team .avatars { display: none; }
+      .workspace { grid-template-columns: minmax(0, 1.35fr) minmax(255px, 1fr); gap: 16px; }
+      .panel-head { padding-left: 18px; padding-right: 18px; }
+      .schema { padding-left: 18px; padding-right: 18px; }
+      .progress-track { margin: 0 18px; }
+      .bank-copy, .bank-tip { padding-left: 18px; padding-right: 18px; }
+      .bank-zone { margin-left: 8px; margin-right: 8px; }
+      .term { font-size: 14px; gap: 8px; padding: 10px; }
+      .slot .term { font-size: 14px; }
+      .calc-row { grid-template-columns: 28px minmax(0, 1fr); gap: 7px; }
+      .schema-caption { margin-left: 35px; }
+      .actions { padding-left: 18px; padding-right: 18px; }
+      .feedback { margin-left: 18px; margin-right: 18px; }
+      .step { display: none; }
+    }
+    @media (max-width: 680px) {
+      .topbar-inner { height: 66px; padding: 0 18px; }
+      .brand-word { font-size: 22px; }
+      .brand-sub { font-size: 8px; letter-spacing: 1.8px; }
+      .brand-mark { width: 39px; height: 37px; }
+      .top-tag { font-size: 9px; letter-spacing: 1px; }
+      main { padding: 25px 16px 14px; }
+      .hero { grid-template-columns: 1fr; margin-bottom: 20px; }
+      .hero-art { display: none; }
+      h1 { font-size: 46px; letter-spacing: -2px; }
+      .instruction { font-size: 15px; line-height: 1.55; }
+      .eyebrow { font-size: 10px; letter-spacing: 1.3px; }
+      .workspace { display: flex; flex-direction: column; gap: 16px; }
+      .panel { width: 100%; border-radius: 18px; }
+      .terms-panel { order: -1; }
+      .term-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .term-list .term { padding: 10px 11px; font-size: 13px; min-height: 51px; }
+      .term-list .grip { display: none; }
+      .bank-zone { min-height: 0; margin-bottom: 8px; }
+      .bank-copy { padding-bottom: 13px; font-size: 12px; }
+      .bank-tip { display: none; }
+      .bank-empty { padding: 10px; }
+      .panel-head { padding-top: 16px; padding-bottom: 13px; }
+      .bank-head { padding-bottom: 7px; }
+      h2 { font-size: 18px; }
+      .slot .term { font-size: 15px; }
+      .calc-row { min-height: 66px; }
+      .feedback { margin-bottom: 18px; }
+      .actions { padding-bottom: 13px; }
+      footer { flex-direction: column; gap: 6px; }
+      .audio-card { padding: 14px; }
+      audio { width: 100%; min-width: 0; flex-basis: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+  <a href="#exercise" class="skip-link">Zur Übung</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand" aria-label="AK Bikes">
+        <span class="brand-mark" aria-hidden="true">
+          <img alt="" src="data:image/png;base64,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">
+        </span>
+        <div aria-hidden="true"><div class="brand-word">AK <span>BIKES</span></div><div class="brand-sub">DEINE BIKE-WERKSTATT</div></div>
+      </div>
+      <div class="top-tag">TEAM BUCHHALTUNG</div>
+    </div>
+  </header>
+  <main>
+    <section class="hero" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">Mission: Das bessere Angebot</p>
+        <h1 id="page-title">Kalkulieren</h1>
+        <p class="instruction">Hilf den Auszubildenden Max und Julia aus dem Team Buchhaltung, das günstigere Angebot herauszufinden, indem du die Begriffe für die Kalkulation anhand des Audios in die richtige Reihenfolge bringst.</p>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 260 142" fill="none" stroke="#2377a8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 116h232" stroke="#c3d7e6" stroke-width="2"/>
+          <g stroke-width="3.2"><circle cx="64" cy="82" r="32"/><circle cx="198" cy="82" r="32"/></g>
+          <g stroke="#6c9fbe" stroke-width="1" opacity=".7"><path d="M64 50v64M32 82h64m-55-23 46 46m0-46-46 46M198 50v64m-32-32h64m-55-23 46 46m0-46-46 46"/></g>
+          <path d="m64 82 34-48 35 48H64m25-34h91l-47 34m65 0-23-65h17m-104 17h23" stroke-width="4"/>
+          <path d="m135 82 11 8h9" stroke-width="3"/><circle cx="133" cy="82" r="5" fill="#ff963f" stroke-width="2"/>
+          <path d="M21 40h25M14 49h20" stroke="#8cb5ce" stroke-width="2"/>
+        </svg>
+        <div class="team"><div class="avatars"><span class="avatar">M</span><span class="avatar">J</span></div><div class="team-title">Max &amp; Julia<span class="team-sub">Auszubildende<br>Team Buchhaltung</span></div></div>
+      </div>
+    </section>
+
+    <section class="audio-card" id="audio-card" aria-label="Audio zur Aufgabe" hidden>
+      <label for="task-audio" class="audio-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="12" width="4" height="8" rx="2"/><rect x="17" y="12" width="4" height="8" rx="2"/></svg>Audio zur Aufgabe</label>
+      <audio id="task-audio" controls preload="metadata" aria-label="Audio zur Kalkulation"></audio>
+      <p class="audio-error" id="audio-error" role="status" hidden>Das Audio konnte nicht geladen werden. Gib deiner Lehrkraft Bescheid.</p>
+    </section>
+
+    <div id="exercise" class="workspace">
+      <section class="panel calculation-panel" aria-labelledby="schema-heading">
+        <div class="panel-head"><h2 id="schema-heading"><span class="step" aria-hidden="true">01</span>Dein Rechenschema</h2><div class="count"><strong id="placed-count">0 / 7</strong> eingesetzt</div></div>
+        <div class="progress-track" role="progressbar" aria-label="Eingesetzte Begriffe" aria-valuemin="0" aria-valuemax="7" aria-valuenow="0" id="progress"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="schema"><p class="schema-caption">Deine Zuordnung</p><div class="rows" id="rows"></div></div>
+        <div class="actions">
+          <button type="button" class="check-wait" id="check-wait" disabled aria-label="Prüffunktion noch gesperrt"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="8" width="12" height="9" rx="2"/><path d="M6 8V6a4 4 0 0 1 8 0v2"/></svg></button>
+          <button type="button" class="button button-primary" id="check" hidden disabled><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m4 10 4 4 8-8"/></svg>Reihenfolge prüfen</button>
+          <button type="button" class="button button-secondary" id="reset"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6a7 7 0 1 1-1 7M4 2v4h4"/></svg>Neu starten</button>
+        </div>
+        <div class="feedback" id="feedback" role="status" aria-live="polite" aria-atomic="true">Höre genau hin und bringe die sieben Begriffe in die richtige Reihenfolge.</div>
+      </section>
+
+      <aside class="panel terms-panel" aria-labelledby="terms-heading">
+        <div class="panel-head bank-head"><h2 id="terms-heading"><span class="step" aria-hidden="true">02</span>Deine Begriffe</h2><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#638397" stroke-width="1.5" aria-hidden="true"><path d="M3 5h3l8 10h3M14 12l3 3-3 3M3 15h3l3-4m3-4 2-2h3M14 2l3 3-3 3"/></svg></div>
+        <p class="bank-copy" id="how-to">Ziehe die Begriffe ins Schema. Oder tippe erst einen Begriff und dann das Zielfeld an.</p>
+        <div class="bank-zone" id="bank-zone" data-bank-zone>
+          <div class="term-list" id="term-list" aria-describedby="how-to"></div>
+          <div class="bank-empty" id="bank-empty" hidden><strong>Alles eingesetzt!</strong><span id="bank-empty-hint">Höre weiter zu und kontrolliere deine Reihenfolge.</span></div>
+          <button type="button" id="bank-return" class="bank-return" hidden>Ausgewählten Begriff zurücklegen</button>
+        </div>
+        <div class="bank-tip"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M10 9v5m0-9v1"/></svg><span>Du kannst Begriffe jederzeit tauschen. Mit dem × legst du einen Begriff zurück.</span></div>
+      </aside>
+    </div>
+    <noscript><p>Bitte aktiviere JavaScript, damit du die Begriffe zuordnen kannst.</p></noscript>
+    <footer><span>AK BIKES <span aria-hidden="true">/</span> Team Buchhaltung</span><span>Hören. Ordnen. Durchblicken.</span></footer>
+    <div class="sr-only" id="announcement" role="status" aria-live="polite" aria-atomic="true"></div>
+  </main>
+
+  <script>
+  "use strict";
+  (() => {
+    // OPTIONAL: z. B. "audio.mp3" eintragen und die MP3 neben index.html ablegen.
+    // Leer lassen, wenn das Audio gemeinsam im Unterricht abgespielt wird.
+    const AUDIO_URL = "";
+
+    // Wartezeit ab Seitenaufruf und bei jedem Neustart: 1 Minute, 30 Sekunden.
+    const CHECK_DELAY_MS = 90_000;
+
+    // Richtige Reihenfolge nach der vorgegebenen Abbildung.
+    const TERMS = [
+      { id: "lep", label: "Listeneinkaufspreis", abbreviation: "LEP" },
+      { id: "rabatt", label: "Lieferer-Rabatt" },
+      { id: "zep", label: "Zieleinkaufspreis", abbreviation: "ZEP" },
+      { id: "skonto", label: "Lieferer-Skonto" },
+      { id: "bep", label: "Bareinkaufspreis", abbreviation: "BEP" },
+      { id: "bezug", label: "Bezugskosten" },
+      { id: "ep", label: "Einstandspreis", abbreviation: "EP" }
+    ];
+    const OPERATORS = ["", "−", "=", "−", "=", "+", "="];
+    const OPERATOR_NAMES = ["", "minus", "gleich", "minus", "gleich", "plus", "gleich"];
+    const termById = new Map(TERMS.map(term => [term.id, term]));
+    const elements = Object.fromEntries([
+      "rows", "term-list", "bank-zone", "bank-empty", "bank-return", "placed-count",
+      "progress", "progress-fill", "feedback", "announcement", "exercise", "check", "reset",
+      "check-wait", "bank-empty-hint"
+    ].map(id => [id, document.getElementById(id)]));
+    let slots = Array(TERMS.length).fill(null);
+    let bankOrder = shuffleTerms();
+    let selectedId = null;
+    let checked = false;
+    let drag = null;
+    let scrollFrame = null;
+    let suppressClickUntil = 0;
+    let checkAvailableAt = Date.now() + CHECK_DELAY_MS;
+    let checkUnlockTimer = null;
+
+    function mayCheck() {
+      return Date.now() >= checkAvailableAt;
+    }
+
+    function updateCheckAvailability() {
+      const remaining = Math.max(0, checkAvailableAt - Date.now());
+      const ready = remaining === 0;
+      const newlyReady = ready && elements.check.hidden;
+      elements["check-wait"].hidden = ready;
+      elements.check.hidden = !ready;
+      elements.check.disabled = !ready;
+      elements["bank-empty-hint"].textContent = ready ? "Prüfe jetzt deine Reihenfolge." : "Höre weiter zu und kontrolliere deine Reihenfolge.";
+      if (ready) {
+        if (checkUnlockTimer !== null) clearTimeout(checkUnlockTimer);
+        checkUnlockTimer = null;
+        if (newlyReady) {
+          announce("Die Hörphase ist beendet. Du kannst jetzt deine Reihenfolge prüfen.");
+          if (slots.every(Boolean) && !checked) setFeedback("Alle Begriffe sind eingesetzt. Prüfe jetzt deine Reihenfolge.");
+        }
+      }
+    }
+
+    function startCheckTimer() {
+      if (checkUnlockTimer !== null) clearTimeout(checkUnlockTimer);
+      checkAvailableAt = Date.now() + CHECK_DELAY_MS;
+      updateCheckAvailability();
+      checkUnlockTimer = setTimeout(updateCheckAvailability, CHECK_DELAY_MS);
+    }
+
+    function shuffleTerms() {
+      const ids = TERMS.map(term => term.id);
+      for (let i = ids.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [ids[i], ids[j]] = [ids[j], ids[i]];
+      }
+      // Die Lösung soll beim Start nicht zufällig schon in der richtigen Reihenfolge stehen.
+      if (ids.every((id, i) => id === TERMS[i].id)) ids.push(ids.shift());
+      return ids;
+    }
+
+    function fullLabel(id) {
+      const term = termById.get(id);
+      return term.label + (term.abbreviation ? " (" + term.abbreviation + ")" : "");
+    }
+
+    function announce(message) {
+      elements.announcement.textContent = message;
+    }
+
+    function setFeedback(message, kind = "neutral") {
+      elements.feedback.textContent = message;
+      elements.feedback.dataset.kind = kind;
+    }
+
+    function termButton(id) {
+      const term = termById.get(id);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "term" + (id === selectedId ? " is-selected" : "");
+      button.dataset.termId = id;
+      button.draggable = false;
+      button.setAttribute("aria-pressed", String(id === selectedId));
+      button.setAttribute("aria-label", fullLabel(id) + (slots.includes(id) ? ", Zeile " + (slots.indexOf(id) + 1) : ", im Begriffsvorrat"));
+      const grip = document.createElement("span");
+      grip.className = "grip";
+      grip.setAttribute("aria-hidden", "true");
+      const label = document.createElement("span");
+      label.className = "term-label";
+      // Sinnvolle Trennstellen für lange Fachbegriffe auf schmalen Displays.
+      label.textContent = term.label.replace("einkaufspreis", "\u00adeinkaufs\u00adpreis");
+      if (term.abbreviation) {
+        const abbr = document.createElement("span");
+        abbr.className = "abbr";
+        abbr.textContent = " (" + term.abbreviation + ")";
+        label.append(abbr);
+      }
+      button.append(grip, label);
+      return button;
+    }
+
+    function render(focusId = null) {
+      elements.rows.replaceChildren();
+      slots.forEach((id, index) => {
+        const row = document.createElement("div");
+        row.className = "calc-row" + ([2, 4, 6].includes(index) ? " subtotal" : "");
+        const operator = document.createElement("span");
+        operator.className = "operator";
+        operator.textContent = OPERATORS[index];
+        operator.setAttribute("aria-hidden", "true");
+        const slot = document.createElement("div");
+        slot.className = "slot";
+        slot.dataset.slot = String(index);
+        slot.setAttribute("role", "group");
+        slot.setAttribute("aria-label", "Zeile " + (index + 1) + (OPERATOR_NAMES[index] ? ", " + OPERATOR_NAMES[index] : ""));
+        if (id) {
+          const term = termButton(id);
+          if (checked) {
+            const correct = id === TERMS[index].id;
+            slot.classList.add(correct ? "is-correct" : "is-wrong");
+            const verdict = document.createElement("span");
+            verdict.className = "verdict";
+            verdict.textContent = correct ? "✓" : "!";
+            verdict.setAttribute("aria-hidden", "true");
+            term.append(verdict);
+            term.setAttribute("aria-label", term.getAttribute("aria-label") + (correct ? ", richtig zugeordnet" : ", noch nicht richtig zugeordnet"));
+          }
+          const remove = document.createElement("button");
+          remove.type = "button";
+          remove.className = "remove-term";
+          remove.dataset.removeId = id;
+          remove.textContent = "×";
+          remove.title = "Begriff zurücklegen";
+          remove.setAttribute("aria-label", fullLabel(id) + " zurücklegen");
+          slot.append(term, remove);
+        } else {
+          const empty = document.createElement("button");
+          empty.type = "button";
+          empty.className = "empty-slot";
+          empty.textContent = "Begriff einsetzen";
+          empty.setAttribute("aria-label", "Begriff in Zeile " + (index + 1) + " einsetzen");
+          if (checked) slot.classList.add("is-missing");
+          slot.append(empty);
+        }
+        row.append(operator, slot);
+        elements.rows.append(row);
+      });
+      elements["term-list"].replaceChildren();
+      const remaining = bankOrder.filter(id => !slots.includes(id));
+      remaining.forEach(id => elements["term-list"].append(termButton(id)));
+      elements["bank-empty"].hidden = remaining.length !== 0;
+      elements["bank-return"].hidden = !selectedId || !slots.includes(selectedId);
+      elements.exercise.classList.toggle("choosing", Boolean(selectedId));
+      const count = slots.filter(Boolean).length;
+      elements["placed-count"].textContent = count + " / " + TERMS.length;
+      elements.progress.setAttribute("aria-valuenow", String(count));
+      elements["progress-fill"].style.width = (count / TERMS.length * 100) + "%";
+      if (focusId) document.querySelector('[data-term-id="' + focusId + '"]')?.focus({ preventScroll: true });
+    }
+
+    function changed() {
+      checked = false;
+      selectedId = null;
+      const complete = slots.every(Boolean);
+      setFeedback(complete ? (mayCheck() ? "Alle Begriffe sind eingesetzt. Prüfe jetzt deine Reihenfolge." : "Alle Begriffe sind eingesetzt. Höre weiter zu und kontrolliere deine Reihenfolge.") : "Ordne die übrigen Begriffe zu. Du kannst eingesetzte Begriffe jederzeit verschieben.");
+    }
+
+    function place(id, targetIndex) {
+      if (!termById.has(id) || !Number.isInteger(targetIndex) || targetIndex < 0 || targetIndex >= slots.length) return;
+      const sourceIndex = slots.indexOf(id);
+      if (sourceIndex === targetIndex) {
+        selectedId = null;
+        render(id);
+        return;
+      }
+      const displaced = slots[targetIndex];
+      if (sourceIndex !== -1) slots[sourceIndex] = displaced;
+      slots[targetIndex] = id;
+      changed();
+      render(id);
+      announce(fullLabel(id) + " in Zeile " + (targetIndex + 1) + " eingesetzt." + (displaced ? " Der bisherige Begriff wurde " + (sourceIndex === -1 ? "zurückgelegt." : "getauscht.") : ""));
+    }
+
+    function returnTerm(id) {
+      const index = slots.indexOf(id);
+      if (index === -1) return;
+      slots[index] = null;
+      changed();
+      render(id);
+      announce(fullLabel(id) + " liegt wieder im Begriffsvorrat.");
+    }
+
+    function select(id) {
+      selectedId = selectedId === id ? null : id;
+      render(id);
+      announce(selectedId ? fullLabel(id) + " ausgewählt. Wähle jetzt ein Zielfeld. Escape hebt die Auswahl auf." : "Auswahl aufgehoben.");
+    }
+
+    // Antippen und Tastatur: echte Buttons funktionieren auch mit Tab und Enter/Leertaste.
+    document.addEventListener("click", event => {
+      if (performance.now() < suppressClickUntil) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+      const remove = event.target.closest("[data-remove-id]");
+      if (remove) { returnTerm(remove.dataset.removeId); return; }
+      const term = event.target.closest("[data-term-id]");
+      if (term) {
+        const slot = term.closest("[data-slot]");
+        if (selectedId && selectedId !== term.dataset.termId && slot) place(selectedId, Number(slot.dataset.slot));
+        else select(term.dataset.termId);
+        return;
+      }
+      const empty = event.target.closest(".empty-slot");
+      if (empty) {
+        if (selectedId) place(selectedId, Number(empty.closest("[data-slot]").dataset.slot));
+        else announce("Wähle zuerst einen Begriff aus dem Begriffsvorrat.");
+      }
+    }, true);
+
+    elements["bank-return"].addEventListener("click", () => { if (selectedId) returnTerm(selectedId); });
+    elements.check.addEventListener("click", () => {
+      // Die zeitliche Sperre gilt auch für vorzeitig ausgelöste Klick-Ereignisse.
+      if (!mayCheck()) return;
+      selectedId = null;
+      checked = true;
+      const count = slots.filter(Boolean).length;
+      const correct = slots.filter((id, i) => id === TERMS[i].id).length;
+      render();
+      if (count === 0) {
+        setFeedback("Setze zuerst die sieben Begriffe in das Rechenschema ein.", "warning");
+      } else if (correct === TERMS.length) {
+        setFeedback("Stark! Alle 7 Begriffe stehen richtig. Max und Julia können mit diesem Schema die Einstandspreise berechnen und vergleichen.", "success");
+      } else if (count < TERMS.length) {
+        const missing = TERMS.length - count;
+        setFeedback("Richtig zugeordnet: " + correct + " von " + count + ". " + (missing === 1 ? "Ein Begriff fehlt noch." : missing + " Begriffe fehlen noch.") + " Höre bei Bedarf noch einmal ins Audio.", "warning");
+      } else {
+        setFeedback(correct + " von 7 Begriffen " + (correct === 1 ? "ist" : "sind") + " richtig. Überprüfe die mit ! markierten Begriffe und höre bei Bedarf noch einmal ins Audio.", "retry");
+      }
+    });
+
+    elements.reset.addEventListener("click", () => {
+      cleanupDrag();
+      slots = Array(TERMS.length).fill(null);
+      bankOrder = shuffleTerms();
+      selectedId = null;
+      checked = false;
+      startCheckTimer();
+      render();
+      setFeedback("Neu gemischt! Höre genau hin und ordne die Begriffe erneut zu.");
+      announce("Die Übung wurde zurückgesetzt. Alle sieben Begriffe sind wieder verfügbar.");
+    });
+
+    // Pointer Events decken Maus, Touchscreen und Stift mit derselben Logik ab.
+    document.addEventListener("pointerdown", event => {
+      const term = event.target.closest("button.term");
+      if (!term || !event.isPrimary || event.button !== 0 || drag) return;
+      const rect = term.getBoundingClientRect();
+      drag = { id: term.dataset.termId, pointerId: event.pointerId, source: term, startX: event.clientX, startY: event.clientY, x: event.clientX, y: event.clientY, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top, width: rect.width, active: false, ghost: null };
+      term.setPointerCapture(event.pointerId);
+    });
+
+    function dragTarget(x, y) {
+      return document.elementFromPoint(x, y)?.closest("[data-slot], [data-bank-zone]");
+    }
+
+    function updateDragView() {
+      if (!drag?.active) return;
+      drag.ghost.style.transform = "translate3d(" + (drag.x - drag.offsetX) + "px," + (drag.y - drag.offsetY) + "px,0)";
+      document.querySelectorAll(".drop-hover").forEach(el => el.classList.remove("drop-hover"));
+      dragTarget(drag.x, drag.y)?.classList.add("drop-hover");
+    }
+
+    function autoScroll() {
+      if (!drag?.active) return;
+      const edge = 72;
+      let amount = 0;
+      if (drag.y < edge) amount = -Math.ceil((edge - Math.max(drag.y, 0)) / 6);
+      else if (drag.y > window.innerHeight - edge) amount = Math.ceil((drag.y - window.innerHeight + edge) / 6);
+      if (amount) { window.scrollBy(0, amount); updateDragView(); }
+      scrollFrame = requestAnimationFrame(autoScroll);
+    }
+
+    document.addEventListener("pointermove", event => {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      drag.x = event.clientX;
+      drag.y = event.clientY;
+      if (!drag.active && Math.hypot(drag.x - drag.startX, drag.y - drag.startY) > 7) {
+        drag.active = true;
+        selectedId = null;
+        elements.exercise.classList.remove("choosing");
+        document.querySelectorAll(".term.is-selected").forEach(el => { el.classList.remove("is-selected"); el.setAttribute("aria-pressed", "false"); });
+        elements["bank-return"].hidden = true;
+        drag.ghost = drag.source.cloneNode(true);
+        drag.ghost.removeAttribute("data-term-id");
+        drag.ghost.setAttribute("aria-hidden", "true");
+        drag.ghost.tabIndex = -1;
+        drag.ghost.className = "term drag-ghost";
+        drag.ghost.style.width = drag.width + "px";
+        document.body.append(drag.ghost);
+        drag.source.classList.add("is-dragging");
+        document.body.classList.add("is-dragging");
+        scrollFrame = requestAnimationFrame(autoScroll);
+      }
+      if (drag.active) { event.preventDefault(); updateDragView(); }
+    }, { passive: false });
+
+    function cleanupDrag() {
+      if (scrollFrame !== null) cancelAnimationFrame(scrollFrame);
+      scrollFrame = null;
+      const previous = drag;
+      drag = null;
+      if (previous) {
+        previous.ghost?.remove();
+        previous.source.classList.remove("is-dragging");
+        if (previous.source.hasPointerCapture(previous.pointerId)) previous.source.releasePointerCapture(previous.pointerId);
+      }
+      document.body.classList.remove("is-dragging");
+      document.querySelectorAll(".drop-hover").forEach(el => el.classList.remove("drop-hover"));
+    }
+
+    document.addEventListener("pointerup", event => {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      const id = drag.id;
+      const active = drag.active;
+      const target = active ? dragTarget(event.clientX, event.clientY) : null;
+      if (active) { event.preventDefault(); suppressClickUntil = performance.now() + 350; }
+      cleanupDrag();
+      if (!active) return; // Ein kurzer Klick wird vom click-Handler verarbeitet.
+      if (target?.hasAttribute("data-slot")) place(id, Number(target.dataset.slot));
+      else if (target?.hasAttribute("data-bank-zone")) {
+        if (slots.includes(id)) returnTerm(id);
+        else render(id);
+      } else {
+        render(id);
+        announce("Kein Zielfeld getroffen. Der Begriff bleibt an seinem bisherigen Platz.");
+      }
+    });
+
+    document.addEventListener("pointercancel", event => {
+      if (drag && event.pointerId === drag.pointerId) { cleanupDrag(); announce("Verschieben abgebrochen."); }
+    });
+    document.addEventListener("dragstart", event => { if (event.target.closest(".term")) event.preventDefault(); });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && (selectedId || drag)) {
+        const focusId = selectedId || drag?.id;
+        cleanupDrag();
+        selectedId = null;
+        render(focusId);
+        announce("Auswahl aufgehoben.");
+      }
+    });
+    window.addEventListener("blur", cleanupDrag);
+    window.addEventListener("focus", updateCheckAvailability);
+    window.addEventListener("pageshow", updateCheckAvailability);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) updateCheckAvailability(); });
+
+    if (AUDIO_URL.trim()) {
+      const audio = document.getElementById("task-audio");
+      document.getElementById("audio-card").hidden = false;
+      audio.addEventListener("error", () => { document.getElementById("audio-error").hidden = false; });
+      audio.src = AUDIO_URL;
+    }
+    render();
+    startCheckTimer();
+  })();
+  </script>
+</body>
+</html>
