@@ -15,7 +15,7 @@
     Ohne Audio-Datei kann die Lehrkraft das Audio gemeinsam abspielen.
     Farben und Logo nach https://www.ak-bikes.bayern/ (Unternehmen: #2377A8,
     Schülerbereich: #FF963F, Grau: #494949). Quelle: /files/src/css/ak-bikes/global.css.
-    Die Prüffunktion wird 90 Sekunden nach Seitenaufruf oder Neustart freigegeben.
+    Die Prüffunktion wird 80 Sekunden nach Seitenaufruf oder Neustart freigegeben.
   -->
   <style>
     :root {
@@ -266,8 +266,9 @@
     // Leer lassen, wenn das Audio gemeinsam im Unterricht abgespielt wird.
     const AUDIO_URL = "";
 
-    // Wartezeit ab Seitenaufruf und bei jedem Neustart: 1 Minute, 30 Sekunden.
-    const CHECK_DELAY_MS = 90_000;
+    // Wartezeit ab Seitenaufruf und bei jedem Neustart: 80 Sekunden.
+    // Zeit in Millisekunden: 80000 = 80 Sekunden.
+    const CHECK_DELAY_MS = 80000;
 
     // Richtige Reihenfolge nach der vorgegebenen Abbildung.
     const TERMS = [
@@ -282,11 +283,12 @@
     const OPERATORS = ["", "−", "=", "−", "=", "+", "="];
     const OPERATOR_NAMES = ["", "minus", "gleich", "minus", "gleich", "plus", "gleich"];
     const termById = new Map(TERMS.map(term => [term.id, term]));
-    const elements = Object.fromEntries([
+    const elements = {};
+    [
       "rows", "term-list", "bank-zone", "bank-empty", "bank-return", "placed-count",
       "progress", "progress-fill", "feedback", "announcement", "exercise", "check", "reset",
       "check-wait", "bank-empty-hint"
-    ].map(id => [id, document.getElementById(id)]));
+    ].forEach(id => { elements[id] = document.getElementById(id); });
     let slots = Array(TERMS.length).fill(null);
     let bankOrder = shuffleTerms();
     let selectedId = null;
@@ -296,34 +298,46 @@
     let suppressClickUntil = 0;
     let checkAvailableAt = Date.now() + CHECK_DELAY_MS;
     let checkUnlockTimer = null;
+    let checkUnlocked = false;
 
     function mayCheck() {
-      return Date.now() >= checkAvailableAt;
+      return checkUnlocked || Date.now() >= checkAvailableAt;
     }
 
     function updateCheckAvailability() {
+      // Immer mit der tatsächlichen Uhrzeit vergleichen. Im Hintergrund
+      // pausierte Browser-Timer verlängern so die Wartezeit nicht.
+      if (checkUnlockTimer !== null) clearTimeout(checkUnlockTimer);
+      checkUnlockTimer = null;
       const remaining = Math.max(0, checkAvailableAt - Date.now());
-      const ready = remaining === 0;
-      const newlyReady = ready && elements.check.hidden;
+      const ready = checkUnlocked || remaining === 0;
+      const newlyReady = ready && !checkUnlocked;
+      checkUnlocked = ready;
       elements["check-wait"].hidden = ready;
       elements.check.hidden = !ready;
       elements.check.disabled = !ready;
       elements["bank-empty-hint"].textContent = ready ? "Prüfe jetzt deine Reihenfolge." : "Höre weiter zu und kontrolliere deine Reihenfolge.";
       if (ready) {
-        if (checkUnlockTimer !== null) clearTimeout(checkUnlockTimer);
-        checkUnlockTimer = null;
         if (newlyReady) {
           announce("Die Hörphase ist beendet. Du kannst jetzt deine Reihenfolge prüfen.");
           if (slots.every(Boolean) && !checked) setFeedback("Alle Begriffe sind eingesetzt. Prüfe jetzt deine Reihenfolge.");
         }
+      } else {
+        // Nachprüfen und erneut planen, auch wenn ein Timer zu früh feuert.
+        checkUnlockTimer = setTimeout(updateCheckAvailability, Math.max(1, Math.min(remaining, 1000)));
       }
     }
 
     function startCheckTimer() {
-      if (checkUnlockTimer !== null) clearTimeout(checkUnlockTimer);
+      checkUnlocked = false;
       checkAvailableAt = Date.now() + CHECK_DELAY_MS;
       updateCheckAvailability();
-      checkUnlockTimer = setTimeout(updateCheckAvailability, CHECK_DELAY_MS);
+    }
+
+    function refreshCheckAfterInteraction() {
+      // Zusätzliche Absicherung, falls nach dem Entsperren des iPads kein
+      // focus- oder visibilitychange-Ereignis ausgelöst wird.
+      if (!checkUnlocked && mayCheck()) updateCheckAvailability();
     }
 
     function shuffleTerms() {
@@ -378,7 +392,7 @@
     }
 
     function render(focusId = null) {
-      elements.rows.replaceChildren();
+      elements.rows.textContent = "";
       slots.forEach((id, index) => {
         const row = document.createElement("div");
         row.className = "calc-row" + ([2, 4, 6].includes(index) ? " subtotal" : "");
@@ -423,7 +437,7 @@
         row.append(operator, slot);
         elements.rows.append(row);
       });
-      elements["term-list"].replaceChildren();
+      elements["term-list"].textContent = "";
       const remaining = bankOrder.filter(id => !slots.includes(id));
       remaining.forEach(id => elements["term-list"].append(termButton(id)));
       elements["bank-empty"].hidden = remaining.length !== 0;
@@ -433,7 +447,13 @@
       elements["placed-count"].textContent = count + " / " + TERMS.length;
       elements.progress.setAttribute("aria-valuenow", String(count));
       elements["progress-fill"].style.width = (count / TERMS.length * 100) + "%";
-      if (focusId) document.querySelector('[data-term-id="' + focusId + '"]')?.focus({ preventScroll: true });
+      if (focusId) {
+        const focusTarget = document.querySelector('[data-term-id="' + focusId + '"]');
+        if (focusTarget) {
+          try { focusTarget.focus({ preventScroll: true }); }
+          catch (_) { focusTarget.focus(); }
+        }
+      }
     }
 
     function changed() {
@@ -536,22 +556,27 @@
       if (!term || !event.isPrimary || event.button !== 0 || drag) return;
       const rect = term.getBoundingClientRect();
       drag = { id: term.dataset.termId, pointerId: event.pointerId, source: term, startX: event.clientX, startY: event.clientY, x: event.clientX, y: event.clientY, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top, width: rect.width, active: false, ghost: null };
-      term.setPointerCapture(event.pointerId);
+      if (term.setPointerCapture) {
+        try { term.setPointerCapture(event.pointerId); }
+        catch (_) { /* Antippen bleibt auch ohne Pointer-Capture möglich. */ }
+      }
     });
 
     function dragTarget(x, y) {
-      return document.elementFromPoint(x, y)?.closest("[data-slot], [data-bank-zone]");
+      const hit = document.elementFromPoint(x, y);
+      return hit ? hit.closest("[data-slot], [data-bank-zone]") : null;
     }
 
     function updateDragView() {
-      if (!drag?.active) return;
+      if (!drag || !drag.active) return;
       drag.ghost.style.transform = "translate3d(" + (drag.x - drag.offsetX) + "px," + (drag.y - drag.offsetY) + "px,0)";
       document.querySelectorAll(".drop-hover").forEach(el => el.classList.remove("drop-hover"));
-      dragTarget(drag.x, drag.y)?.classList.add("drop-hover");
+      const target = dragTarget(drag.x, drag.y);
+      if (target) target.classList.add("drop-hover");
     }
 
     function autoScroll() {
-      if (!drag?.active) return;
+      if (!drag || !drag.active) return;
       const edge = 72;
       let amount = 0;
       if (drag.y < edge) amount = -Math.ceil((edge - Math.max(drag.y, 0)) / 6);
@@ -590,9 +615,13 @@
       const previous = drag;
       drag = null;
       if (previous) {
-        previous.ghost?.remove();
+        if (previous.ghost) previous.ghost.remove();
         previous.source.classList.remove("is-dragging");
-        if (previous.source.hasPointerCapture(previous.pointerId)) previous.source.releasePointerCapture(previous.pointerId);
+        if (previous.source.hasPointerCapture && previous.source.releasePointerCapture) {
+          try {
+            if (previous.source.hasPointerCapture(previous.pointerId)) previous.source.releasePointerCapture(previous.pointerId);
+          } catch (_) { /* Der Browser hat den Pointer möglicherweise schon freigegeben. */ }
+        }
       }
       document.body.classList.remove("is-dragging");
       document.querySelectorAll(".drop-hover").forEach(el => el.classList.remove("drop-hover"));
@@ -606,8 +635,8 @@
       if (active) { event.preventDefault(); suppressClickUntil = performance.now() + 350; }
       cleanupDrag();
       if (!active) return; // Ein kurzer Klick wird vom click-Handler verarbeitet.
-      if (target?.hasAttribute("data-slot")) place(id, Number(target.dataset.slot));
-      else if (target?.hasAttribute("data-bank-zone")) {
+      if (target && target.hasAttribute("data-slot")) place(id, Number(target.dataset.slot));
+      else if (target && target.hasAttribute("data-bank-zone")) {
         if (slots.includes(id)) returnTerm(id);
         else render(id);
       } else {
@@ -622,13 +651,17 @@
     document.addEventListener("dragstart", event => { if (event.target.closest(".term")) event.preventDefault(); });
     document.addEventListener("keydown", event => {
       if (event.key === "Escape" && (selectedId || drag)) {
-        const focusId = selectedId || drag?.id;
+        const focusId = selectedId || (drag && drag.id);
         cleanupDrag();
         selectedId = null;
         render(focusId);
         announce("Auswahl aufgehoben.");
       }
     });
+    // Auf Touch-Geräten vor der normalen Bedienung die Freigabe prüfen.
+    document.addEventListener("pointerdown", refreshCheckAfterInteraction, true);
+    document.addEventListener("touchstart", refreshCheckAfterInteraction, { capture: true, passive: true });
+    document.addEventListener("keydown", refreshCheckAfterInteraction, true);
     window.addEventListener("blur", cleanupDrag);
     window.addEventListener("focus", updateCheckAvailability);
     window.addEventListener("pageshow", updateCheckAvailability);
