@@ -124,8 +124,6 @@
     .button-primary { background: var(--blue); color: white; border-color: var(--blue); flex: 1; }
     .button-primary:hover { background: #1d648d; }
     .button-secondary:hover { background: #edf2f7; }
-    .check-wait { min-height: 46px; flex: 1; border: 1px solid #d8dadd; border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; justify-content: center; background: #eff0f2; color: #969ba1; cursor: not-allowed; }
-    .check-wait svg { width: 17px; height: 17px; flex: 0 0 17px; }
     .feedback { margin: 0 24px 22px; padding: 12px 14px; border-radius: 10px; background: #eef3f7; color: #4d6475; font-size: 13px; line-height: 1.5; min-height: 44px; }
     .feedback[data-kind="success"] { background: #e5f3ce; color: #2c5c28; border-left: 4px solid #609238; }
     .feedback[data-kind="warning"] { background: #fff3e4; color: #805015; border-left: 4px solid #be8a42; }
@@ -236,8 +234,7 @@
         <div class="progress-track" role="progressbar" aria-label="Eingesetzte Begriffe" aria-valuemin="0" aria-valuemax="7" aria-valuenow="0" id="progress"><div class="progress-fill" id="progress-fill"></div></div>
         <div class="schema"><p class="schema-caption">Deine Zuordnung</p><div class="rows" id="rows"></div></div>
         <div class="actions">
-          <button type="button" class="check-wait" id="check-wait" disabled aria-label="Prüffunktion noch gesperrt"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="8" width="12" height="9" rx="2"/><path d="M6 8V6a4 4 0 0 1 8 0v2"/></svg></button>
-          <button type="button" class="button button-primary" id="check" hidden disabled><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m4 10 4 4 8-8"/></svg>Reihenfolge prüfen</button>
+          <button type="button" class="button button-primary" id="check" hidden disabled><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m4 10 4 4 8-8"/></svg>Überprüfe</button>
           <button type="button" class="button button-secondary" id="reset"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6a7 7 0 1 1-1 7M4 2v4h4"/></svg>Neu starten</button>
         </div>
         <div class="feedback" id="feedback" role="status" aria-live="polite" aria-atomic="true">Höre genau hin und bringe die sieben Begriffe in die richtige Reihenfolge.</div>
@@ -248,7 +245,7 @@
         <p class="bank-copy" id="how-to">Ziehe die Begriffe ins Schema. Oder tippe erst einen Begriff und dann das Zielfeld an.</p>
         <div class="bank-zone" id="bank-zone" data-bank-zone>
           <div class="term-list" id="term-list" aria-describedby="how-to"></div>
-          <div class="bank-empty" id="bank-empty" hidden><strong>Alles eingesetzt!</strong><span id="bank-empty-hint">Höre weiter zu und kontrolliere deine Reihenfolge.</span></div>
+          <div class="bank-empty" id="bank-empty" hidden><strong>Alles eingesetzt!</strong><span id="bank-empty-hint">Tippe auf „Überprüfe“, um deine Reihenfolge zu kontrollieren.</span></div>
           <button type="button" id="bank-return" class="bank-return" hidden>Ausgewählten Begriff zurücklegen</button>
         </div>
         <div class="bank-tip"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M10 9v5m0-9v1"/></svg><span>Du kannst Begriffe jederzeit tauschen. Mit dem × legst du einen Begriff zurück.</span></div>
@@ -266,10 +263,6 @@
     // Leer lassen, wenn das Audio gemeinsam im Unterricht abgespielt wird.
     const AUDIO_URL = "";
 
-    // Wartezeit ab Seitenaufruf und bei jedem Neustart: 80 Sekunden.
-    // Zeit in Millisekunden: 80000 = 80 Sekunden.
-    const CHECK_DELAY_MS = 80000;
-
     // Richtige Reihenfolge nach der vorgegebenen Abbildung.
     const TERMS = [
       { id: "lep", label: "Listeneinkaufspreis", abbreviation: "LEP" },
@@ -286,8 +279,7 @@
     const elements = {};
     [
       "rows", "term-list", "bank-zone", "bank-empty", "bank-return", "placed-count",
-      "progress", "progress-fill", "feedback", "announcement", "exercise", "check", "reset",
-      "check-wait", "bank-empty-hint"
+      "progress", "progress-fill", "feedback", "announcement", "exercise", "check", "reset"
     ].forEach(id => { elements[id] = document.getElementById(id); });
     let slots = Array(TERMS.length).fill(null);
     let bankOrder = shuffleTerms();
@@ -296,48 +288,16 @@
     let drag = null;
     let scrollFrame = null;
     let suppressClickUntil = 0;
-    let checkAvailableAt = Date.now() + CHECK_DELAY_MS;
-    let checkUnlockTimer = null;
-    let checkUnlocked = false;
 
     function mayCheck() {
-      return checkUnlocked || Date.now() >= checkAvailableAt;
+      // Erst prüfen, wenn jedes Feld mit einem Begriff belegt ist.
+      return slots.every(Boolean);
     }
 
     function updateCheckAvailability() {
-      // Immer mit der tatsächlichen Uhrzeit vergleichen. Im Hintergrund
-      // pausierte Browser-Timer verlängern so die Wartezeit nicht.
-      if (checkUnlockTimer !== null) clearTimeout(checkUnlockTimer);
-      checkUnlockTimer = null;
-      const remaining = Math.max(0, checkAvailableAt - Date.now());
-      const ready = checkUnlocked || remaining === 0;
-      const newlyReady = ready && !checkUnlocked;
-      checkUnlocked = ready;
-      elements["check-wait"].hidden = ready;
+      const ready = mayCheck();
       elements.check.hidden = !ready;
       elements.check.disabled = !ready;
-      elements["bank-empty-hint"].textContent = ready ? "Prüfe jetzt deine Reihenfolge." : "Höre weiter zu und kontrolliere deine Reihenfolge.";
-      if (ready) {
-        if (newlyReady) {
-          announce("Die Hörphase ist beendet. Du kannst jetzt deine Reihenfolge prüfen.");
-          if (slots.every(Boolean) && !checked) setFeedback("Alle Begriffe sind eingesetzt. Prüfe jetzt deine Reihenfolge.");
-        }
-      } else {
-        // Nachprüfen und erneut planen, auch wenn ein Timer zu früh feuert.
-        checkUnlockTimer = setTimeout(updateCheckAvailability, Math.max(1, Math.min(remaining, 1000)));
-      }
-    }
-
-    function startCheckTimer() {
-      checkUnlocked = false;
-      checkAvailableAt = Date.now() + CHECK_DELAY_MS;
-      updateCheckAvailability();
-    }
-
-    function refreshCheckAfterInteraction() {
-      // Zusätzliche Absicherung, falls nach dem Entsperren des iPads kein
-      // focus- oder visibilitychange-Ereignis ausgelöst wird.
-      if (!checkUnlocked && mayCheck()) updateCheckAvailability();
     }
 
     function shuffleTerms() {
@@ -447,6 +407,7 @@
       elements["placed-count"].textContent = count + " / " + TERMS.length;
       elements.progress.setAttribute("aria-valuenow", String(count));
       elements["progress-fill"].style.width = (count / TERMS.length * 100) + "%";
+      updateCheckAvailability();
       if (focusId) {
         const focusTarget = document.querySelector('[data-term-id="' + focusId + '"]');
         if (focusTarget) {
@@ -460,7 +421,7 @@
       checked = false;
       selectedId = null;
       const complete = slots.every(Boolean);
-      setFeedback(complete ? (mayCheck() ? "Alle Begriffe sind eingesetzt. Prüfe jetzt deine Reihenfolge." : "Alle Begriffe sind eingesetzt. Höre weiter zu und kontrolliere deine Reihenfolge.") : "Ordne die übrigen Begriffe zu. Du kannst eingesetzte Begriffe jederzeit verschieben.");
+      setFeedback(complete ? "Alle Begriffe sind eingesetzt. Tippe auf „Überprüfe“, um deine Reihenfolge zu kontrollieren." : "Ordne die übrigen Begriffe zu. Du kannst eingesetzte Begriffe jederzeit verschieben.");
     }
 
     function place(id, targetIndex) {
@@ -519,20 +480,14 @@
 
     elements["bank-return"].addEventListener("click", () => { if (selectedId) returnTerm(selectedId); });
     elements.check.addEventListener("click", () => {
-      // Die zeitliche Sperre gilt auch für vorzeitig ausgelöste Klick-Ereignisse.
+      // Auch direkt ausgelöste Klick-Ereignisse dürfen unvollständige Schemas nicht prüfen.
       if (!mayCheck()) return;
       selectedId = null;
       checked = true;
-      const count = slots.filter(Boolean).length;
       const correct = slots.filter((id, i) => id === TERMS[i].id).length;
       render();
-      if (count === 0) {
-        setFeedback("Setze zuerst die sieben Begriffe in das Rechenschema ein.", "warning");
-      } else if (correct === TERMS.length) {
+      if (correct === TERMS.length) {
         setFeedback("Stark! Alle 7 Begriffe stehen richtig. Max und Julia können mit diesem Schema die Einstandspreise berechnen und vergleichen.", "success");
-      } else if (count < TERMS.length) {
-        const missing = TERMS.length - count;
-        setFeedback("Richtig zugeordnet: " + correct + " von " + count + ". " + (missing === 1 ? "Ein Begriff fehlt noch." : missing + " Begriffe fehlen noch.") + " Höre bei Bedarf noch einmal ins Audio.", "warning");
       } else {
         setFeedback(correct + " von 7 Begriffen " + (correct === 1 ? "ist" : "sind") + " richtig. Überprüfe die mit ! markierten Begriffe und höre bei Bedarf noch einmal ins Audio.", "retry");
       }
@@ -544,7 +499,6 @@
       bankOrder = shuffleTerms();
       selectedId = null;
       checked = false;
-      startCheckTimer();
       render();
       setFeedback("Neu gemischt! Höre genau hin und ordne die Begriffe erneut zu.");
       announce("Die Übung wurde zurückgesetzt. Alle sieben Begriffe sind wieder verfügbar.");
@@ -658,14 +612,7 @@
         announce("Auswahl aufgehoben.");
       }
     });
-    // Auf Touch-Geräten vor der normalen Bedienung die Freigabe prüfen.
-    document.addEventListener("pointerdown", refreshCheckAfterInteraction, true);
-    document.addEventListener("touchstart", refreshCheckAfterInteraction, { capture: true, passive: true });
-    document.addEventListener("keydown", refreshCheckAfterInteraction, true);
     window.addEventListener("blur", cleanupDrag);
-    window.addEventListener("focus", updateCheckAvailability);
-    window.addEventListener("pageshow", updateCheckAvailability);
-    document.addEventListener("visibilitychange", () => { if (!document.hidden) updateCheckAvailability(); });
 
     if (AUDIO_URL.trim()) {
       const audio = document.getElementById("task-audio");
@@ -674,7 +621,6 @@
       audio.src = AUDIO_URL;
     }
     render();
-    startCheckTimer();
   })();
   </script>
 </body>
